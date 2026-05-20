@@ -7,8 +7,7 @@ conn = sqlite3.connect("data.sqlite")
 df_boston = pd.read_sql("""
 SELECT e.firstName, e.lastName
 FROM employees e
-JOIN offices o
-ON e.officeCode = o.officeCode
+JOIN offices o ON e.officeCode = o.officeCode
 WHERE o.city = 'Boston';
 """, conn)
 
@@ -16,8 +15,7 @@ WHERE o.city = 'Boston';
 df_zero_emp = pd.read_sql("""
 SELECT o.officeCode, o.city, o.state
 FROM offices o
-LEFT JOIN employees e
-ON o.officeCode = e.officeCode
+LEFT JOIN employees e ON o.officeCode = e.officeCode
 WHERE e.employeeNumber IS NULL;
 """, conn)
 
@@ -25,8 +23,7 @@ WHERE e.employeeNumber IS NULL;
 df_employee = pd.read_sql("""
 SELECT e.firstName, e.lastName, o.city, o.state
 FROM employees e
-LEFT JOIN offices o
-ON e.officeCode = o.officeCode
+LEFT JOIN offices o ON e.officeCode = o.officeCode
 ORDER BY e.firstName, e.lastName;
 """, conn)
 
@@ -34,8 +31,7 @@ ORDER BY e.firstName, e.lastName;
 df_contacts = pd.read_sql("""
 SELECT c.contactFirstName, c.contactLastName, c.phone, c.salesRepEmployeeNumber
 FROM customers c
-LEFT JOIN orders o
-ON c.customerNumber = o.customerNumber
+LEFT JOIN orders o ON c.customerNumber = o.customerNumber
 WHERE o.orderNumber IS NULL
 ORDER BY c.contactLastName;
 """, conn)
@@ -44,8 +40,7 @@ ORDER BY c.contactLastName;
 df_payment = pd.read_sql("""
 SELECT c.contactFirstName, c.contactLastName, p.amount, p.paymentDate
 FROM customers c
-JOIN payments p
-ON c.customerNumber = p.customerNumber
+JOIN payments p ON c.customerNumber = p.customerNumber
 ORDER BY CAST(p.amount AS REAL) DESC;
 """, conn)
 
@@ -54,8 +49,7 @@ df_credit = pd.read_sql("""
 SELECT e.employeeNumber, e.firstName, e.lastName,
        COUNT(c.customerNumber) AS numcustomers
 FROM employees e
-JOIN customers c
-ON e.employeeNumber = c.salesRepEmployeeNumber
+JOIN customers c ON e.employeeNumber = c.salesRepEmployeeNumber
 GROUP BY e.employeeNumber, e.firstName, e.lastName
 HAVING AVG(c.creditLimit) > 90000
 ORDER BY numcustomers DESC;
@@ -67,8 +61,7 @@ SELECT p.productName,
        COUNT(od.orderNumber) AS numorders,
        SUM(od.quantityOrdered) AS totalunits
 FROM products p
-JOIN orderdetails od
-ON p.productCode = od.productCode
+JOIN orderdetails od ON p.productCode = od.productCode
 GROUP BY p.productName
 ORDER BY totalunits DESC;
 """, conn)
@@ -79,10 +72,8 @@ SELECT p.productName,
        p.productCode,
        COUNT(DISTINCT o.customerNumber) AS numpurchasers
 FROM products p
-JOIN orderdetails od
-ON p.productCode = od.productCode
-JOIN orders o
-ON od.orderNumber = o.orderNumber
+JOIN orderdetails od ON p.productCode = od.productCode
+JOIN orders o ON od.orderNumber = o.orderNumber
 GROUP BY p.productName, p.productCode
 ORDER BY numpurchasers DESC;
 """, conn)
@@ -93,12 +84,10 @@ SELECT COUNT(c.customerNumber) AS n_customers,
        o.officeCode,
        o.city
 FROM offices o
-JOIN employees e
-ON o.officeCode = e.officeCode
-JOIN customers c
-ON e.employeeNumber = c.salesRepEmployeeNumber
+JOIN employees e ON o.officeCode = e.officeCode
+JOIN customers c ON e.employeeNumber = c.salesRepEmployeeNumber
 GROUP BY o.officeCode, o.city
-ORDER BY n_customers DESC;
+ORDER BY o.city;
 """, conn)
 
 # STEP 10
@@ -109,23 +98,18 @@ SELECT DISTINCT e.employeeNumber,
        off.city,
        off.officeCode
 FROM employees e
-JOIN offices off
-ON e.officeCode = off.officeCode
-JOIN customers c
-ON e.employeeNumber = c.salesRepEmployeeNumber
-JOIN orders o
-ON c.customerNumber = o.customerNumber
-JOIN orderdetails od
-ON o.orderNumber = od.orderNumber
+JOIN offices off ON e.officeCode = off.officeCode
+JOIN customers c ON e.employeeNumber = c.salesRepEmployeeNumber
+JOIN orders o ON c.customerNumber = o.customerNumber
+JOIN orderdetails od ON o.orderNumber = od.orderNumber
 WHERE od.productCode IN (
     SELECT od.productCode
     FROM orderdetails od
-    JOIN orders o
-    ON od.orderNumber = o.orderNumber
+    JOIN orders o ON od.orderNumber = o.orderNumber
     GROUP BY od.productCode
     HAVING COUNT(DISTINCT o.customerNumber) < 20
 )
-ORDER BY e.firstName, e.lastName;
+ORDER BY e.employeeNumber;
 """, conn)
 
 conn.close()
