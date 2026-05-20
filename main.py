@@ -92,24 +92,28 @@ ORDER BY o.city;
 
 # STEP 10
 df_under_20 = pd.read_sql("""
-SELECT DISTINCT e.employeeNumber,
+SELECT DISTINCT
+       e.employeeNumber,
        e.firstName,
        e.lastName,
        off.city,
        off.officeCode
 FROM employees e
-JOIN offices off ON e.officeCode = off.officeCode
-JOIN customers c ON e.employeeNumber = c.salesRepEmployeeNumber
-JOIN orders o ON c.customerNumber = o.customerNumber
-JOIN orderdetails od ON o.orderNumber = od.orderNumber
+JOIN offices off
+ON e.officeCode = off.officeCode
+JOIN customers c
+ON e.employeeNumber = c.salesRepEmployeeNumber
+JOIN orders o
+ON c.customerNumber = o.customerNumber
+JOIN orderdetails od
+ON o.orderNumber = od.orderNumber
 WHERE od.productCode IN (
     SELECT od.productCode
     FROM orderdetails od
-    JOIN orders o ON od.orderNumber = o.orderNumber
+    JOIN orders o
+    ON od.orderNumber = o.orderNumber
     GROUP BY od.productCode
     HAVING COUNT(DISTINCT o.customerNumber) < 20
 )
-ORDER BY e.employeeNumber;
+ORDER BY e.firstName DESC;
 """, conn)
-
-conn.close()
