@@ -1,6 +1,11 @@
+import sqlite3
+import pandas as pd
+
+conn = sqlite3.connect("data.sqlite")
+
 # STEP 1
 df_boston = pd.read_sql("""
-SELECT e.firstName, e.lastName, e.jobTitle
+SELECT e.firstName, e.lastName
 FROM employees e
 JOIN offices o
 ON e.officeCode = o.officeCode
@@ -46,19 +51,20 @@ ORDER BY CAST(p.amount AS REAL) DESC;
 
 # STEP 6
 df_credit = pd.read_sql("""
-SELECT e.employeeNumber, e.firstName, e.lastName, COUNT(c.customerNumber) AS numcustomers
+SELECT e.employeeNumber, e.firstName, e.lastName,
+       COUNT(c.customerNumber) AS numcustomers
 FROM employees e
 JOIN customers c
 ON e.employeeNumber = c.salesRepEmployeeNumber
 GROUP BY e.employeeNumber, e.firstName, e.lastName
 HAVING AVG(c.creditLimit) > 90000
-ORDER BY numcustomers DESC
-LIMIT 4;
+ORDER BY numcustomers DESC;
 """, conn)
 
 # STEP 7
 df_product_sold = pd.read_sql("""
-SELECT p.productName, COUNT(od.orderNumber) AS numorders,
+SELECT p.productName,
+       COUNT(od.orderNumber) AS numorders,
        SUM(od.quantityOrdered) AS totalunits
 FROM products p
 JOIN orderdetails od
@@ -69,7 +75,8 @@ ORDER BY totalunits DESC;
 
 # STEP 8
 df_total_customers = pd.read_sql("""
-SELECT p.productName, p.productCode,
+SELECT p.productName,
+       p.productCode,
        COUNT(DISTINCT o.customerNumber) AS numpurchasers
 FROM products p
 JOIN orderdetails od
@@ -90,13 +97,17 @@ JOIN employees e
 ON o.officeCode = e.officeCode
 JOIN customers c
 ON e.employeeNumber = c.salesRepEmployeeNumber
-GROUP BY o.officeCode, o.city;
+GROUP BY o.officeCode, o.city
+ORDER BY n_customers DESC;
 """, conn)
 
 # STEP 10
 df_under_20 = pd.read_sql("""
-SELECT DISTINCT e.employeeNumber, e.firstName, e.lastName,
-       off.city, off.officeCode
+SELECT DISTINCT e.employeeNumber,
+       e.firstName,
+       e.lastName,
+       off.city,
+       off.officeCode
 FROM employees e
 JOIN offices off
 ON e.officeCode = off.officeCode
@@ -113,5 +124,8 @@ WHERE od.productCode IN (
     ON od.orderNumber = o.orderNumber
     GROUP BY od.productCode
     HAVING COUNT(DISTINCT o.customerNumber) < 20
-);
+)
+ORDER BY e.firstName, e.lastName;
 """, conn)
+
+conn.close()
